@@ -31,7 +31,7 @@ Praatの音響分析機能とLLM（大規模言語モデル）を組み合わせ
 スクリプトをターミナル（コマンドプロンプトやPowerShell）から実行します。
 
 ```bash
-python analyze.py "path/to/your/song.wav"
+python vocal_insight_ai.py "path/to/your/song.wav"
 ```
 
 実行後、音声ファイルと同じディレクトリに `<入力ファイル名>_prompt.txt` という名前で分析結果のプロンプトが出力されます。
