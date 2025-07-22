@@ -1,0 +1,4 @@
+librosa
+praat-parselmouth
+soundfile
+numpy
