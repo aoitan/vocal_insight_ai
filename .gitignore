@@ -1,0 +1,25 @@
+local.*.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg
+*.egg-info/
+dist/
+build/
+*.so
+.pytest_cache/
+
+# VSCode
+.vscode/
+
+# Vim
+*.swp
+*.swo
+*.bak
+*.tmp
