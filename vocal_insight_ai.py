@@ -1,17 +1,14 @@
 import librosa
 import numpy as np
-import soundfile as sf
 import parselmouth
-import os
 import json
-import shutil
-import argparse
 
 # --- 設定項目 ---
-TEMP_DIR = "temp_segments"
-RMS_DELTA_PERCENTILE = 95 # RMSの変化点検出に使用するパーセンタイル
-MIN_LEN_SEC = 8.0   # セグメントの最小長さ（秒）
-MAX_LEN_SEC = 45.0 # セグメントの最大長さ（秒）
+default_analysis_config = {
+    "rms_delta_percentile": 95, # RMSの変化点検出に使用するパーセンタイル
+    "min_len_sec": 8.0,   # セグメントの最小長さ（秒）
+    "max_len_sec": 45.0 # セグメントの最大長さ（秒）
+}
 
 def get_segment_boundaries(y, sr, percentile):
     rms = librosa.feature.rms(y=y)[0]
@@ -43,10 +40,10 @@ def process_boundaries(boundaries_sec, total_duration, min_len, max_len):
     final_boundaries.append(processed_boundaries[-1])
     return np.unique(final_boundaries)
 
-def analyze_segment_with_praat(filepath):
-    """parselmouthを使って音声ファイルを分析し、特徴量を返す"""
+def analyze_segment_with_praat(y_segment, sr):
+    """parselmouthを使って音声セグメント（NumPy配列）を分析し、特徴量を返す"""
     try:
-        snd = parselmouth.Sound(filepath)
+        snd = parselmouth.Sound(y_segment, sr)
         pitch = snd.to_pitch()
         hnr = snd.to_harmonicity()
         formant = snd.to_formant_burg()
@@ -76,8 +73,8 @@ def analyze_segment_with_praat(filepath):
             "f3_mean_hz": float(f3_mean) if not np.isnan(f3_mean) else 0,
         }
     except Exception as e:
-        print(f"Error analyzing {filepath}: {e}")
-        return {"f0_mean_hz": 0, "f0_std_hz": 0, "hnr_mean_db": 0, "f1_mean_hz": 0, "f2_mean_hz": 0, "f3_mean_hz": 0}
+        # エラーをサイレントに隠蔽せず、呼び出し元に通知するために例外を再スローする
+        raise e
 
 
 def generate_llm_prompt(analysis_data, filename):
@@ -102,37 +99,26 @@ def generate_llm_prompt(analysis_data, filename):
 - フォルマント F2: {feat['f2_mean_hz']:.1f} Hz
 - フォルマント F3: {feat['f3_mean_hz']:.1f} Hz
 """
-    prompt += "\n--- 以上です。分析レポートを作成してください。 ---"
+    prompt += "\n--- 以上です。分析レポートを作成してください。---"
     return prompt
 
-def main(input_filepath):
-    """メインの処理フロー"""
-    if os.path.exists(TEMP_DIR):
-        shutil.rmtree(TEMP_DIR)
-    os.makedirs(TEMP_DIR)
-
-    print(f"1. Loading audio file: {input_filepath}")
-    y, sr = librosa.load(input_filepath, sr=None)
+def analyze_audio_segments(y, sr, filename, config=default_analysis_config):
+    rms_delta_percentile = config["rms_delta_percentile"]
+    min_len_sec = config["min_len_sec"]
+    max_len_sec = config["max_len_sec"]
     total_duration = librosa.get_duration(y=y, sr=sr)
-
-    print("2. Detecting dynamic change points...")
-    boundaries = get_segment_boundaries(y, sr, RMS_DELTA_PERCENTILE)
-    
-    print("3. Processing segment boundaries (merging/splitting)...")
-    final_boundaries = process_boundaries(boundaries, total_duration, MIN_LEN_SEC, MAX_LEN_SEC)
+    boundaries = get_segment_boundaries(y, sr, rms_delta_percentile)
+    final_boundaries = process_boundaries(boundaries, total_duration, min_len_sec, max_len_sec)
     
     all_results = []
-    print("4. Analyzing each segment...")
+    
     for i in range(len(final_boundaries) - 1):
         start_sec, end_sec = final_boundaries[i], final_boundaries[i+1]
         segment_id = i + 1
-        print(f"  - Segment {segment_id} ({start_sec:.2f}s - {end_sec:.2f}s)")
         
-        temp_filepath = os.path.join(TEMP_DIR, f"segment_{segment_id}.wav")
         segment_y = y[int(start_sec * sr):int(end_sec * sr)]
-        sf.write(temp_filepath, segment_y, sr)
         
-        features = analyze_segment_with_praat(temp_filepath)
+        features = analyze_segment_with_praat(segment_y, sr)
         
         all_results.append({
             "segment_id": segment_id,
@@ -140,28 +126,5 @@ def main(input_filepath):
             "time_end_s": round(end_sec, 2),
             "features": features
         })
-
-    print("\n\n✅ Analysis Complete. Generating LLM prompt...")
-    final_prompt = generate_llm_prompt(all_results, os.path.basename(input_filepath))
     
-    dirname = os.path.dirname(input_filepath)
-    file_name_without_ext = os.path.splitext(os.path.basename(input_filepath))[0]
-    output_filename = os.path.join(dirname, file_name_without_ext + "_prompt.txt")
-    with open(output_filename, "w", encoding="utf-8") as f:
-        f.write(final_prompt)
-    print(f"📝 LLM prompt has been saved to '{output_filename}'")
-    
-    shutil.rmtree(TEMP_DIR)
-    print(f"🗑️ Temporary directory '{TEMP_DIR}' removed.")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Analyze a song's vocal and generate an LLM prompt.")
-    parser.add_argument("input_file", type=str, help="Path to the input audio file (e.g., your_song.wav)")
-    
-    args = parser.parse_args()
-
-    if not os.path.exists(args.input_file):
-        print(f"Error: Input file not found at '{args.input_file}'. Please check the path.")
-    else:
-        main(args.input_file)
+    return all_results, generate_llm_prompt(all_results, filename)
