@@ -102,7 +102,23 @@ def generate_llm_prompt(analysis_data, filename):
     prompt += "\n--- 以上です。分析レポートを作成してください。---"
     return prompt
 
-def analyze_audio_segments(y, sr, filename, config=default_analysis_config):
+def analyze_audio_segments(y: np.ndarray, sr: int, filename: str, config: dict = default_analysis_config) -> tuple[list[dict], str]:
+    """音声データからセグメントを抽出し、各セグメントの音響特徴を分析し、LLMプロンプトを生成します。
+
+    Args:
+        y (np.ndarray): 音声データ（NumPy配列）。
+        sr (int): サンプリングレート。
+        filename (str): 分析対象のファイル名（LLMプロンプト生成に使用）。
+        config (dict, optional): 分析設定。以下のキーを含む辞書:
+            - "rms_delta_percentile" (int): RMSの変化点検出に使用するパーセンタイル。
+            - "min_len_sec" (float): セグメントの最小長さ（秒）。
+            - "max_len_sec" (float): セグメントの最大長さ（秒）。
+            Defaults to default_analysis_config.
+
+    Returns:
+        tuple[list[dict], str]: 分析結果のリストと生成されたLLMプロンプトのタプル。
+            分析結果のリストは、各セグメントのID、開始・終了時間、音響特徴を含む辞書のリストです。
+    """
     rms_delta_percentile = config["rms_delta_percentile"]
     min_len_sec = config["min_len_sec"]
     max_len_sec = config["max_len_sec"]
