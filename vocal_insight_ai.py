@@ -2,9 +2,30 @@ import librosa
 import numpy as np
 import parselmouth
 import json
+from typing import TypedDict
+
+# --- 型定義 ---
+class FeatureData(TypedDict):
+    f0_mean_hz: float
+    f0_std_hz: float
+    hnr_mean_db: float
+    f1_mean_hz: float
+    f2_mean_hz: float
+    f3_mean_hz: float
+
+class SegmentAnalysis(TypedDict):
+    segment_id: int
+    time_start_s: float
+    time_end_s: float
+    features: FeatureData
+
+class AnalysisConfig(TypedDict):
+    rms_delta_percentile: int
+    min_len_sec: float
+    max_len_sec: float
 
 # --- 設定項目 ---
-default_analysis_config = {
+default_analysis_config: AnalysisConfig = {
     "rms_delta_percentile": 95, # RMSの変化点検出に使用するパーセンタイル
     "min_len_sec": 8.0,   # セグメントの最小長さ（秒）
     "max_len_sec": 45.0 # セグメントの最大長さ（秒）
@@ -40,7 +61,7 @@ def process_boundaries(boundaries_sec, total_duration, min_len, max_len):
     final_boundaries.append(processed_boundaries[-1])
     return np.unique(final_boundaries)
 
-def analyze_segment_with_praat(y_segment, sr):
+def analyze_segment_with_praat(y_segment: np.ndarray, sr: int) -> FeatureData:
     """parselmouthを使って音声セグメント（NumPy配列）を分析し、特徴量を返す"""
     try:
         snd = parselmouth.Sound(y_segment, sr)
@@ -77,7 +98,7 @@ def analyze_segment_with_praat(y_segment, sr):
         raise e
 
 
-def generate_llm_prompt(analysis_data, filename):
+def generate_llm_prompt(analysis_data: list[SegmentAnalysis], filename: str) -> str:
     prompt = f"""
 あなたはプロのボーカルアナリストです。
 以下のデータは、楽曲「{filename}」の歌声の時系列データから、ダイナミクスの変化で分割したセグメントごとの音響特徴です。
@@ -102,7 +123,7 @@ def generate_llm_prompt(analysis_data, filename):
     prompt += "\n--- 以上です。分析レポートを作成してください。---"
     return prompt
 
-def analyze_audio_segments(y: np.ndarray, sr: int, filename: str, config: dict = default_analysis_config) -> tuple[list[dict], str]:
+def analyze_audio_segments(y: np.ndarray, sr: int, filename: str, config: AnalysisConfig = default_analysis_config) -> tuple[list[SegmentAnalysis], str]:
     """音声データからセグメントを抽出し、各セグメントの音響特徴を分析し、LLMプロンプトを生成します。
 
     Args:
