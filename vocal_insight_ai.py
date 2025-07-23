@@ -71,7 +71,8 @@ def analyze_segment_with_praat(y_segment, sr):
             "f3_mean_hz": float(f3_mean) if not np.isnan(f3_mean) else 0,
         }
     except Exception as e:
-        return {"f0_mean_hz": 0, "f0_std_hz": 0, "hnr_mean_db": 0, "f1_mean_hz": 0, "f2_mean_hz": 0, "f3_mean_hz": 0}
+        # エラーをサイレントに隠蔽せず、呼び出し元に通知するために例外を再スローする
+        raise e
 
 
 def generate_llm_prompt(analysis_data, filename):
