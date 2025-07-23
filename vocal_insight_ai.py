@@ -4,9 +4,11 @@ import parselmouth
 import json
 
 # --- 設定項目 ---
-RMS_DELTA_PERCENTILE = 95 # RMSの変化点検出に使用するパーセンタイル
-MIN_LEN_SEC = 8.0   # セグメントの最小長さ（秒）
-MAX_LEN_SEC = 45.0 # セグメントの最大長さ（秒）
+default_analysis_config = {
+    "rms_delta_percentile": 95, # RMSの変化点検出に使用するパーセンタイル
+    "min_len_sec": 8.0,   # セグメントの最小長さ（秒）
+    "max_len_sec": 45.0 # セグメントの最大長さ（秒）
+}
 
 def get_segment_boundaries(y, sr, percentile):
     rms = librosa.feature.rms(y=y)[0]
@@ -100,7 +102,10 @@ def generate_llm_prompt(analysis_data, filename):
     prompt += "\n--- 以上です。分析レポートを作成してください。---"
     return prompt
 
-def analyze_audio_segments(y, sr, filename, rms_delta_percentile=RMS_DELTA_PERCENTILE, min_len_sec=MIN_LEN_SEC, max_len_sec=MAX_LEN_SEC):
+def analyze_audio_segments(y, sr, filename, config=default_analysis_config):
+    rms_delta_percentile = config["rms_delta_percentile"]
+    min_len_sec = config["min_len_sec"]
+    max_len_sec = config["max_len_sec"]
     total_duration = librosa.get_duration(y=y, sr=sr)
     boundaries = get_segment_boundaries(y, sr, rms_delta_percentile)
     final_boundaries = process_boundaries(boundaries, total_duration, min_len_sec, max_len_sec)
