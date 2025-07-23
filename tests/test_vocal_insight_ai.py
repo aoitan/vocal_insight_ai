@@ -41,6 +41,7 @@ def mock_parselmouth_sound(monkeypatch):
 
 
 def test_get_segment_boundaries():
+    np.random.seed(0) # For reproducible results
     y = np.random.rand(44100 * 10) # 10 seconds of audio
     sr = 44100
     boundaries = get_segment_boundaries(y, sr, 95)
@@ -59,6 +60,7 @@ def test_process_boundaries():
     assert final_boundaries[-1] == total_duration
 
 def test_analyze_segment_with_praat():
+    np.random.seed(0) # For reproducible results
     y_segment = np.random.rand(44100 * 2) # 2 seconds of audio
     sr = 44100
     features = analyze_segment_with_praat(y_segment, sr)
@@ -78,6 +80,7 @@ def test_generate_llm_prompt():
     assert "Segment 1" in prompt
 
 def test_analyze_audio_segments():
+    np.random.seed(0) # For reproducible results
     y = np.random.rand(44100 * 15) # 15 seconds of audio
     sr = 44100
     filename = "test_audio.wav"
