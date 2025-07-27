@@ -12,7 +12,7 @@ python = ">=3.10,<3.13"
 librosa = "^0.10.1"
 numpy = "^1.26.4"
 soundfile = "^0.12.1"
-parselmouth = "^0.4.3"
+praat-parselmouth = "*"
 click = "^8.1.7"
 
 [tool.poetry.group.dev.dependencies]
