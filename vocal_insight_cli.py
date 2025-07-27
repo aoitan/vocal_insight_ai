@@ -12,11 +12,9 @@ def cli():
 @cli.command()
 @click.argument('input_file', type=click.Path(exists=True, dir_okay=False))
 @click.option('--output-dir', type=click.Path(file_okay=False), default='.', help='Directory to save the generated prompt. Defaults to current directory.')
-@click.option('--temp-dir', type=click.Path(file_okay=False), default='temp_segments', help='Temporary directory for segment audio files. Will be created and removed.')
 def analyze(
     input_file: str,
-    output_dir: str,
-    temp_dir: str
+    output_dir: str
 ):
     """Analyze an audio file and generate an LLM prompt."""
     click.echo(f"Analyzing {input_file}...")
@@ -46,7 +44,7 @@ def analyze(
 
     except Exception as e:
         click.echo(f"Error during analysis: {e}", err=True)
-        exit(1)
+        raise click.Abort()
 
 if __name__ == '__main__':
     cli()
