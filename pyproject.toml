@@ -8,7 +8,7 @@ readme = "README.md"
 packages = [{include = "vocal_insight_ai.py"}, {include = "vocal_insight_cli.py"}]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.8,<3.14"
 librosa = "^0.10.1"
 numpy = "^1.26.4"
 soundfile = "^0.12.1"
