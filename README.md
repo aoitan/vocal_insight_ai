@@ -25,22 +25,22 @@
 
 ### コアライブラリとCLIのインストール
 
-現在、CLIはプロジェクトのルートディレクトリから直接実行できます。
+本プロジェクトはPoetryで管理されています。
 
 1.  **依存ライブラリのインストール**
     ```bash
-    pip install -r requirements.txt
+    poetry install
     ```
 
 ### CLIの使い方
 
 ```bash
-python vocal_insight_cli.py analyze <path_to_audio_file.wav> [--output-dir <output_directory>]
+poetry run vocal-insight analyze <path_to_audio_file.wav> [--output-dir <output_directory>]
 ```
 
 例:
 ```bash
-python vocal_insight_cli.py analyze audio/sample.wav --output-dir output
+poetry run vocal-insight analyze audio/sample.wav --output-dir output
 ```
 
 実行後、指定された出力ディレクトリに `<入力ファイル名>_prompt.txt` という名前で分析結果のプロンプトが出力されます。
