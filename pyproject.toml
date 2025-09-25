@@ -17,6 +17,7 @@ click = "^8.1.7"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
+ruff = "^0.13.2"
 
 [tool.poetry.scripts]
 vocal-insight = "vocal_insight_cli:cli"
@@ -24,3 +25,13 @@ vocal-insight = "vocal_insight_cli:cli"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
