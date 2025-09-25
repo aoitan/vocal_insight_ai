@@ -23,3 +23,9 @@ build/
 *.swo
 *.bak
 *.tmp
+
+# environment variable
+.env
+
+# macosx
+.DS_Store
