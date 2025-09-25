@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "vocal-insight-ai"
+version = "0.1.0"
+description = "VocalInsight AI: Praat audio analysis with LLM prompt generation"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "vocal_insight_ai.py"}, {include = "vocal_insight_cli.py"}]
+
+[tool.poetry.dependencies]
+<<<<<<< Updated upstream
+python = ">=3.9,<3.13"
+=======
+python = ">=3.9,<3.10"
+>>>>>>> Stashed changes
+librosa = "^0.10.1"
+numpy = "^1.26.4"
+soundfile = "^0.12.1"
+praat-parselmouth = "*"
+click = "^8.1.7"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+ruff = "^0.13.2"
+
+[tool.poetry.scripts]
+vocal-insight = "vocal_insight_cli:cli"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
