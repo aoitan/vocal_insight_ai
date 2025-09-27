@@ -15,6 +15,19 @@ build/
 *.so
 .pytest_cache/
 
+# Linting & Code Quality Tools
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
 # VSCode
 .vscode/
 
