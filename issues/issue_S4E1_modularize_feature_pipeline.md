@@ -1,7 +1,8 @@
 ---
 title: "[epic]: ボーカル特徴量抽出パイプラインのモジュール化"
-labels: "epic, vocal_insight_ai"
+labels: "epic, vocal_insight_ai, partial"
 assignees: "@[担当者]"
+progress: "70% - 基盤実装完了、CLI統合待ち"
 ---
 
 ## 概要

@@ -5,7 +5,11 @@ description = "VocalInsight AI: Praat audio analysis with LLM prompt generation"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "vocal_insight_ai.py"}, {include = "vocal_insight_cli.py"}]
+packages = [
+    {include = "vocal_insight_ai.py"}, 
+    {include = "vocal_insight_cli.py"},
+    {include = "vocal_insight"}
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
