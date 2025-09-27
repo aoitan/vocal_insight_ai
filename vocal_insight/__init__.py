@@ -8,9 +8,4 @@ from .analysis.pipeline import analyze_audio_segments
 from .core.types import AnalysisConfig, FeatureData, SegmentAnalysis
 
 __version__ = "0.1.0"
-__all__ = [
-    "analyze_audio_segments",
-    "FeatureData",
-    "SegmentAnalysis", 
-    "AnalysisConfig"
-]
+__all__ = ["analyze_audio_segments", "FeatureData", "SegmentAnalysis", "AnalysisConfig"]

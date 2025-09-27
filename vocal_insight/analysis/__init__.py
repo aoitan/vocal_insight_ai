@@ -6,6 +6,4 @@
 
 from .pipeline import analyze_audio_segments
 
-__all__ = [
-    "analyze_audio_segments"
-]
+__all__ = ["analyze_audio_segments"]

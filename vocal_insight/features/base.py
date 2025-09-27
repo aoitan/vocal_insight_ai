@@ -13,14 +13,14 @@ from ..core.types import FeatureData
 
 class FeatureExtractor(Protocol):
     """特徴量抽出器のプロトコル"""
-    
+
     def extract(self, audio: np.ndarray, sr: int) -> FeatureData:
         """音声データから特徴量を抽出
-        
+
         Args:
             audio: 音声データ
             sr: サンプリング周波数
-            
+
         Returns:
             抽出された特徴量データ
         """

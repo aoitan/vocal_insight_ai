@@ -7,7 +7,4 @@
 from .acoustic import AcousticFeatureExtractor
 from .base import FeatureExtractor
 
-__all__ = [
-    "FeatureExtractor",
-    "AcousticFeatureExtractor"
-]
+__all__ = ["FeatureExtractor", "AcousticFeatureExtractor"]

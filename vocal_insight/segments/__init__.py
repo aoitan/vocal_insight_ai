@@ -7,7 +7,4 @@
 from .detector import SegmentBoundaryDetector
 from .processor import SegmentProcessor
 
-__all__ = [
-    "SegmentBoundaryDetector",
-    "SegmentProcessor"
-]
+__all__ = ["SegmentBoundaryDetector", "SegmentProcessor"]

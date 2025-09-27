@@ -9,8 +9,8 @@ from .types import AnalysisConfig, FeatureData, SegmentAnalysis
 
 __all__ = [
     "FeatureData",
-    "SegmentAnalysis", 
+    "SegmentAnalysis",
     "AnalysisConfig",
     "get_default_config",
-    "validate_config"
+    "validate_config",
 ]
