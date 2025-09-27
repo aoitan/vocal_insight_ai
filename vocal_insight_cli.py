@@ -24,7 +24,7 @@ from vocal_insight_ai import analyze_audio_segments as legacy_analyze
 @click.pass_context
 def cli(ctx: click.Context, verbose: bool, quiet: bool):
     """VocalInsight AI - Advanced vocal analysis tool with modular architecture.
-    
+
     This tool provides comprehensive vocal analysis including segment detection,
     acoustic feature extraction, and LLM prompt generation using a modular
     architecture for maximum flexibility and extensibility.
@@ -42,7 +42,9 @@ def cli(ctx: click.Context, verbose: bool, quiet: bool):
 
 
 @cli.command()
-@click.argument("input_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument(
+    "input_file", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.option(
     "--output-dir",
     "-o",
@@ -105,7 +107,7 @@ def analyze(
         # Basic usage (existing compatibility)
         vocal-insight analyze recording.wav
 
-        # Custom segment settings  
+        # Custom segment settings
         vocal-insight analyze recording.wav --min-segment 5.0 --max-segment 30.0
 
         # JSON output for structured data
@@ -137,25 +139,25 @@ def analyze(
         if module == "legacy":
             if verbose:
                 click.echo("📦 Using legacy module (vocal_insight_ai)")
-            
+
             # Load audio file
             y, sr = librosa.load(input_file, sr=None)
-            
+
             # Use legacy analysis
             analysis_results, llm_prompt = legacy_analyze(
                 y, sr, input_file.name, config=config
             )
-            
+
             # Convert to modern format for consistent output handling
             segments = analysis_results
-            
+
         else:
             if verbose:
                 click.echo("📦 Using new modular architecture (vocal_insight)")
-            
+
             # Use new modular analysis
             segments = analyze_audio_segments(str(input_file), config)
-            
+
             # Generate LLM prompt from segments
             llm_prompt = _generate_llm_prompt_from_segments(segments, input_file.name)
 
@@ -189,12 +191,15 @@ def analyze(
         click.echo(f"❌ Error during analysis: {e}", err=True)
         if verbose:
             import traceback
+
             traceback.print_exc()
         ctx.exit(1)
 
 
 @cli.command()
-@click.argument("input_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument(
+    "input_file", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.option(
     "--output-dir",
     "-o",
@@ -221,7 +226,7 @@ def analyze(
     help="Start time for partial extraction (seconds)",
 )
 @click.option(
-    "--segment-end", 
+    "--segment-end",
     type=float,
     help="End time for partial extraction (seconds)",
 )
@@ -261,25 +266,30 @@ def extract(
     # Validate time range
     if segment_start is not None and segment_end is not None:
         if segment_start >= segment_end:
-            click.echo("Error: --segment-start must be less than --segment-end", err=True)
+            click.echo(
+                "Error: --segment-start must be less than --segment-end", err=True
+            )
             ctx.exit(1)
 
     try:
         # Load audio
         y, sr = librosa.load(input_file, sr=None)
-        
+
         # Apply time range if specified
         if segment_start is not None or segment_end is not None:
             start_sample = int(segment_start * sr) if segment_start is not None else 0
             end_sample = int(segment_end * sr) if segment_end is not None else len(y)
             y = y[start_sample:end_sample]
-            
+
             if verbose:
                 duration = (end_sample - start_sample) / sr
-                click.echo(f"📐 Analyzing segment: {segment_start or 0:.1f}s - {segment_end or duration:.1f}s")
+                click.echo(
+                    f"📐 Analyzing segment: {segment_start or 0:.1f}s - {segment_end or duration:.1f}s"
+                )
 
         # Extract features using new modular system
         from vocal_insight.features import AcousticFeatureExtractor
+
         extractor_instance = AcousticFeatureExtractor()
         features = extractor_instance.extract(y, sr)
 
@@ -290,13 +300,17 @@ def extract(
         # Save features
         if output_format == "json":
             output_file = output_dir / f"{base_name}_features.json"
-            _save_features_json(output_file, features, input_file.name, segment_start, segment_end)
+            _save_features_json(
+                output_file, features, input_file.name, segment_start, segment_end
+            )
         elif output_format == "csv":
             output_file = output_dir / f"{base_name}_features.csv"
             _save_features_csv(output_file, features)
         elif output_format == "yaml":
             output_file = output_dir / f"{base_name}_features.yaml"
-            _save_features_yaml(output_file, features, input_file.name, segment_start, segment_end)
+            _save_features_yaml(
+                output_file, features, input_file.name, segment_start, segment_end
+            )
 
         if not quiet:
             click.echo(f"✅ Features saved to {output_file}")
@@ -308,12 +322,15 @@ def extract(
         click.echo(f"❌ Error during feature extraction: {e}", err=True)
         if verbose:
             import traceback
+
             traceback.print_exc()
         ctx.exit(1)
 
 
 @cli.command()
-@click.argument("input_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument(
+    "input_file", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.option(
     "--output-dir",
     "-o",
@@ -364,7 +381,7 @@ def segment(
 ):
     """Detect and analyze segments in an audio file.
 
-    This command performs only segment boundary detection without full 
+    This command performs only segment boundary detection without full
     feature extraction, useful for understanding the temporal structure
     of recordings.
 
@@ -393,17 +410,19 @@ def segment(
     try:
         # Use new modular system for segment detection
         from vocal_insight.segments import SegmentBoundaryDetector, SegmentProcessor
-        
+
         # Load audio
         y, sr = librosa.load(input_file, sr=None)
-        
+
         # Detect boundaries
         detector = SegmentBoundaryDetector()
         boundaries = detector.detect_boundaries(y, sr, percentile)
-        
+
         # Process segments
         processor = SegmentProcessor()
-        segments = processor.process_boundaries(boundaries, len(y), sr, min_segment, max_segment)
+        segments = processor.process_boundaries(
+            boundaries, len(y), sr, min_segment, max_segment
+        )
 
         # Create output directory
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -439,6 +458,7 @@ def segment(
         click.echo(f"❌ Error during segment detection: {e}", err=True)
         if verbose:
             import traceback
+
             traceback.print_exc()
         ctx.exit(1)
 
@@ -552,15 +572,17 @@ def info():
     """Display system and version information."""
     import platform
     import sys
-    
+
     try:
         import librosa
+
         librosa_version = librosa.__version__
     except ImportError:
         librosa_version = "not installed"
-        
+
     try:
         import parselmouth
+
         praat_version = parselmouth.__version__
     except ImportError:
         praat_version = "not installed"
@@ -587,7 +609,9 @@ Supported Audio Formats:
 
 
 # Helper functions for output formatting
-def _generate_llm_prompt_from_segments(segments: List[Dict[str, Any]], filename: str) -> str:
+def _generate_llm_prompt_from_segments(
+    segments: List[Dict[str, Any]], filename: str
+) -> str:
     """Generate LLM prompt from segment analysis results."""
     prompt_parts = [
         f"Vocal Analysis Results for {filename}",
@@ -595,58 +619,74 @@ def _generate_llm_prompt_from_segments(segments: List[Dict[str, Any]], filename:
         "",
         f"Audio file: {filename}",
         f"Total segments analyzed: {len(segments)}",
-        ""
+        "",
     ]
-    
+
     for i, segment in enumerate(segments):
-        prompt_parts.extend([
-            f"Segment {i}:",
-            f"  Time range: {segment.get('time_start_s', 0):.1f}s - {segment.get('time_end_s', 0):.1f}s",
-            f"  Duration: {segment.get('time_end_s', 0) - segment.get('time_start_s', 0):.1f}s"
-        ])
-        
-        if 'features' in segment:
-            features = segment['features']
-            prompt_parts.extend([
-                f"  F0 mean: {features.get('f0_mean_hz', 0):.1f} Hz",
-                f"  F0 std: {features.get('f0_std_hz', 0):.1f} Hz", 
-                f"  HNR mean: {features.get('hnr_mean_db', 0):.1f} dB",
-                f"  F1 mean: {features.get('f1_mean_hz', 0):.1f} Hz",
-                f"  F2 mean: {features.get('f2_mean_hz', 0):.1f} Hz",
-                f"  F3 mean: {features.get('f3_mean_hz', 0):.1f} Hz",
-            ])
+        prompt_parts.extend(
+            [
+                f"Segment {i}:",
+                f"  Time range: {segment.get('time_start_s', 0):.1f}s - {segment.get('time_end_s', 0):.1f}s",
+                f"  Duration: {segment.get('time_end_s', 0) - segment.get('time_start_s', 0):.1f}s",
+            ]
+        )
+
+        if "features" in segment:
+            features = segment["features"]
+            prompt_parts.extend(
+                [
+                    f"  F0 mean: {features.get('f0_mean_hz', 0):.1f} Hz",
+                    f"  F0 std: {features.get('f0_std_hz', 0):.1f} Hz",
+                    f"  HNR mean: {features.get('hnr_mean_db', 0):.1f} dB",
+                    f"  F1 mean: {features.get('f1_mean_hz', 0):.1f} Hz",
+                    f"  F2 mean: {features.get('f2_mean_hz', 0):.1f} Hz",
+                    f"  F3 mean: {features.get('f3_mean_hz', 0):.1f} Hz",
+                ]
+            )
         prompt_parts.append("")
-    
+
     return "\n".join(prompt_parts)
 
 
-def _save_text_format(output_file: Path, segments: List[Dict[str, Any]], llm_prompt: str):
+def _save_text_format(
+    output_file: Path, segments: List[Dict[str, Any]], llm_prompt: str
+):
     """Save analysis results in text format."""
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(llm_prompt)
 
 
-def _save_json_format(output_file: Path, segments: List[Dict[str, Any]], filename: str, config: AnalysisConfig):
+def _save_json_format(
+    output_file: Path,
+    segments: List[Dict[str, Any]],
+    filename: str,
+    config: AnalysisConfig,
+):
     """Save analysis results in JSON format."""
     data = {
         "filename": filename,
         "analysis_config": {
             "rms_delta_percentile": config["rms_delta_percentile"],
-            "min_len_sec": config["min_len_sec"], 
+            "min_len_sec": config["min_len_sec"],
             "max_len_sec": config["max_len_sec"],
         },
         "segments": segments,
         "metadata": {
             "total_segments": len(segments),
             "total_duration_s": segments[-1].get("time_end_s", 0) if segments else 0,
-        }
+        },
     }
-    
+
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-def _save_yaml_format(output_file: Path, segments: List[Dict[str, Any]], filename: str, config: AnalysisConfig):
+def _save_yaml_format(
+    output_file: Path,
+    segments: List[Dict[str, Any]],
+    filename: str,
+    config: AnalysisConfig,
+):
     """Save analysis results in YAML format."""
     data = {
         "filename": filename,
@@ -659,28 +699,38 @@ def _save_yaml_format(output_file: Path, segments: List[Dict[str, Any]], filenam
         "metadata": {
             "total_segments": len(segments),
             "total_duration_s": segments[-1].get("time_end_s", 0) if segments else 0,
-        }
+        },
     }
-    
+
     with open(output_file, "w", encoding="utf-8") as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
+        )
 
 
-def _save_features_json(output_file: Path, features: FeatureData, filename: str, start_time: Optional[float], end_time: Optional[float]):
+def _save_features_json(
+    output_file: Path,
+    features: FeatureData,
+    filename: str,
+    start_time: Optional[float],
+    end_time: Optional[float],
+):
     """Save features in JSON format."""
     data = {
         "filename": filename,
         "time_range": {
             "start_s": start_time,
             "end_s": end_time,
-        } if start_time is not None or end_time is not None else None,
+        }
+        if start_time is not None or end_time is not None
+        else None,
         "features": dict(features),
         "metadata": {
             "extraction_method": "acoustic",
             "feature_count": len(features),
-        }
+        },
     }
-    
+
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -688,7 +738,7 @@ def _save_features_json(output_file: Path, features: FeatureData, filename: str,
 def _save_features_csv(output_file: Path, features: FeatureData):
     """Save features in CSV format."""
     import csv
-    
+
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["feature", "value"])
@@ -696,26 +746,38 @@ def _save_features_csv(output_file: Path, features: FeatureData):
             writer.writerow([key, value])
 
 
-def _save_features_yaml(output_file: Path, features: FeatureData, filename: str, start_time: Optional[float], end_time: Optional[float]):
+def _save_features_yaml(
+    output_file: Path,
+    features: FeatureData,
+    filename: str,
+    start_time: Optional[float],
+    end_time: Optional[float],
+):
     """Save features in YAML format."""
     data = {
         "filename": filename,
         "time_range": {
             "start_s": start_time,
             "end_s": end_time,
-        } if start_time is not None or end_time is not None else None,
+        }
+        if start_time is not None or end_time is not None
+        else None,
         "features": dict(features),
         "metadata": {
             "extraction_method": "acoustic",
             "feature_count": len(features),
-        }
+        },
     }
-    
+
     with open(output_file, "w", encoding="utf-8") as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
+        )
 
 
-def _save_segments_json(output_file: Path, segments: List[Dict[str, Any]], filename: str):
+def _save_segments_json(
+    output_file: Path, segments: List[Dict[str, Any]], filename: str
+):
     """Save segments in JSON format."""
     data = {
         "filename": filename,
@@ -723,9 +785,9 @@ def _save_segments_json(output_file: Path, segments: List[Dict[str, Any]], filen
         "metadata": {
             "total_segments": len(segments),
             "total_duration_s": segments[-1].get("time_end_s", 0) if segments else 0,
-        }
+        },
     }
-    
+
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -733,24 +795,31 @@ def _save_segments_json(output_file: Path, segments: List[Dict[str, Any]], filen
 def _save_segments_csv(output_file: Path, segments: List[Dict[str, Any]]):
     """Save segments in CSV format."""
     import csv
-    
+
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         if not segments:
             return
-            
-        writer = csv.DictWriter(f, fieldnames=["segment_id", "time_start_s", "time_end_s", "duration_s"])
+
+        writer = csv.DictWriter(
+            f, fieldnames=["segment_id", "time_start_s", "time_end_s", "duration_s"]
+        )
         writer.writeheader()
-        
+
         for i, segment in enumerate(segments):
-            writer.writerow({
-                "segment_id": i,
-                "time_start_s": segment.get("time_start_s", 0),
-                "time_end_s": segment.get("time_end_s", 0), 
-                "duration_s": segment.get("time_end_s", 0) - segment.get("time_start_s", 0),
-            })
+            writer.writerow(
+                {
+                    "segment_id": i,
+                    "time_start_s": segment.get("time_start_s", 0),
+                    "time_end_s": segment.get("time_end_s", 0),
+                    "duration_s": segment.get("time_end_s", 0)
+                    - segment.get("time_start_s", 0),
+                }
+            )
 
 
-def _save_segments_yaml(output_file: Path, segments: List[Dict[str, Any]], filename: str):
+def _save_segments_yaml(
+    output_file: Path, segments: List[Dict[str, Any]], filename: str
+):
     """Save segments in YAML format."""
     data = {
         "filename": filename,
@@ -758,66 +827,87 @@ def _save_segments_yaml(output_file: Path, segments: List[Dict[str, Any]], filen
         "metadata": {
             "total_segments": len(segments),
             "total_duration_s": segments[-1].get("time_end_s", 0) if segments else 0,
-        }
+        },
     }
-    
+
     with open(output_file, "w", encoding="utf-8") as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
+        )
 
 
-def _generate_segment_plot(output_file: Path, y: Any, sr: int, segments: List[Dict[str, Any]]):
+def _generate_segment_plot(
+    output_file: Path, y: Any, sr: int, segments: List[Dict[str, Any]]
+):
     """Generate visualization plot of segments."""
     try:
         import matplotlib.pyplot as plt
         import numpy as np
-        
+
         # Create figure
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-        
+
         # Time axis
         time = np.arange(len(y)) / sr
-        
+
         # Plot waveform
-        ax1.plot(time, y, alpha=0.7, color='blue')
-        ax1.set_ylabel('Amplitude')
-        ax1.set_title('Audio Waveform with Detected Segments')
+        ax1.plot(time, y, alpha=0.7, color="blue")
+        ax1.set_ylabel("Amplitude")
+        ax1.set_title("Audio Waveform with Detected Segments")
         ax1.grid(True, alpha=0.3)
-        
+
         # Plot RMS
         frame_length = 2048
         hop_length = 512
-        rms = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)[0]
-        rms_time = librosa.frames_to_time(np.arange(len(rms)), sr=sr, hop_length=hop_length)
-        
-        ax2.plot(rms_time, rms, color='orange', label='RMS Energy')
-        ax2.set_xlabel('Time (seconds)')
-        ax2.set_ylabel('RMS Energy')
-        ax2.set_title('RMS Energy with Segment Boundaries')
+        rms = librosa.feature.rms(
+            y=y, frame_length=frame_length, hop_length=hop_length
+        )[0]
+        rms_time = librosa.frames_to_time(
+            np.arange(len(rms)), sr=sr, hop_length=hop_length
+        )
+
+        ax2.plot(rms_time, rms, color="orange", label="RMS Energy")
+        ax2.set_xlabel("Time (seconds)")
+        ax2.set_ylabel("RMS Energy")
+        ax2.set_title("RMS Energy with Segment Boundaries")
         ax2.grid(True, alpha=0.3)
-        
+
         # Add segment boundaries
         for i, segment in enumerate(segments):
             start_time = segment.get("time_start_s", 0)
             end_time = segment.get("time_end_s", 0)
-            
+
             # Vertical lines for boundaries
             for ax in [ax1, ax2]:
-                ax.axvline(start_time, color='red', linestyle='--', alpha=0.7, linewidth=1)
-                ax.axvline(end_time, color='red', linestyle='--', alpha=0.7, linewidth=1)
-            
+                ax.axvline(
+                    start_time, color="red", linestyle="--", alpha=0.7, linewidth=1
+                )
+                ax.axvline(
+                    end_time, color="red", linestyle="--", alpha=0.7, linewidth=1
+                )
+
             # Segment labels
             mid_time = (start_time + end_time) / 2
-            ax1.annotate(f'S{i}', xy=(mid_time, 0), xytext=(mid_time, ax1.get_ylim()[1] * 0.8),
-                        ha='center', va='center', fontsize=8, alpha=0.8)
-        
+            ax1.annotate(
+                f"S{i}",
+                xy=(mid_time, 0),
+                xytext=(mid_time, ax1.get_ylim()[1] * 0.8),
+                ha="center",
+                va="center",
+                fontsize=8,
+                alpha=0.8,
+            )
+
         ax2.legend()
         plt.tight_layout()
-        plt.savefig(output_file, dpi=150, bbox_inches='tight')
+        plt.savefig(output_file, dpi=150, bbox_inches="tight")
         plt.close()
-        
+
     except ImportError:
         # matplotlib not available
-        click.echo("Warning: matplotlib not available, skipping plot generation", err=True)
+        click.echo(
+            "Warning: matplotlib not available, skipping plot generation", err=True
+        )
 
 
 if __name__ == "__main__":
