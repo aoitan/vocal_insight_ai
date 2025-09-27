@@ -32,7 +32,10 @@ def cli(ctx, verbose: bool, quiet: bool):
     ctx.obj["quiet"] = quiet
 
     if verbose and quiet:
-        click.echo("Error: --verbose and --quiet cannot be used together", err=True)
+        click.echo(
+            "Error: --verbose and --quiet are mutually exclusive. Use one or the other.",
+            err=True,
+        )
         ctx.exit(1)
 
 
@@ -246,12 +249,7 @@ def extract(
         click.echo(f"🔧 Extracting features from {input_file.name}...")
 
     # パラメータ検証
-    if segment_start is not None and segment_end is not None:
-        if segment_start >= segment_end:
-            click.echo(
-                "Error: --segment-start must be less than --segment-end", err=True
-            )
-            ctx.exit(1)
+    _validate_time_range(segment_start, segment_end, ctx)
 
     try:
         # 音声読み込み
@@ -379,9 +377,7 @@ def segment(
         click.echo(f"✂️  Detecting segments in {input_file.name}...")
 
     # パラメータ検証
-    if min_segment >= max_segment:
-        click.echo("Error: --min-segment must be less than --max-segment", err=True)
-        ctx.exit(1)
+    _validate_segment_range(min_segment, max_segment, ctx)
 
     try:
         # 音声読み込み
@@ -572,68 +568,101 @@ VocalInsight AI System Information:
 
 
 def _generate_llm_prompt_from_segments(segments):
-    """セグメントからLLMプロンプトを生成"""
-    # 実装時に詳細化
+    """Generate an LLM prompt from segments."""
+    # To be implemented in detail
+    return "LLM Prompt generated from segments..."
+
+
+# バリデーション共通関数
+def _validate_segment_range(min_segment: float, max_segment: float, ctx) -> None:
+    """Validate segment range parameters."""
+    if min_segment >= max_segment:
+        click.echo(
+            f"Error: --min-segment ({min_segment}) must be less than --max-segment ({max_segment})",
+            err=True,
+        )
+        ctx.exit(1)
+
+
+def _validate_time_range(
+    start_time: Optional[float], end_time: Optional[float], ctx
+) -> None:
+    """Validate time range parameters."""
+    if start_time is not None and end_time is not None:
+        if start_time >= end_time:
+            click.echo(
+                f"Error: --segment-start ({start_time}) must be less than --segment-end ({end_time})",
+                err=True,
+            )
+            ctx.exit(1)
+
+
+# ヘルパー関数群（実装時に詳細化）
+
+
+def _generate_llm_prompt_from_segments(segments):
+    """Generate an LLM prompt from segments."""
+    # To be implemented in detail
     return "LLM Prompt generated from segments..."
 
 
 def _save_text_format(output_file, analysis_results, llm_prompt):
-    """テキスト形式で保存"""
-    # 実装時に詳細化
+    """Save results in text format."""
+    # To be implemented in detail
     pass
 
 
 def _save_json_format(output_file, analysis_results, filename, config):
-    """JSON形式で保存"""
-    # 実装時に詳細化
+    """Save results in JSON format."""
+    # To be implemented in detail
     pass
 
 
 def _save_yaml_format(output_file, analysis_results, filename, config):
-    """YAML形式で保存"""
-    # 実装時に詳細化
+    """Save results in YAML format."""
+    # To be implemented in detail
     pass
 
 
 def _save_features_json(output_file, features, filename):
-    """特徴量をJSON形式で保存"""
-    # 実装時に詳細化
+    """Save features in JSON format."""
+    # To be implemented in detail
     pass
 
 
 def _save_features_csv(output_file, features):
-    """特徴量をCSV形式で保存"""
-    # 実装時に詳細化
+    """Save features in CSV format."""
+    # To be implemented in detail
     pass
 
 
 def _save_features_yaml(output_file, features, filename):
-    """特徴量をYAML形式で保存"""
-    # 実装時に詳細化
+    """Save features in YAML format."""
+    # To be implemented in detail
     pass
 
 
 def _save_segments_json(output_file, segments, filename, config):
-    """セグメント情報をJSON形式で保存"""
-    # 実装時に詳細化
+    """Save segment information in JSON format."""
+    # To be implemented in detail
     pass
 
 
 def _save_segments_csv(output_file, segments):
-    """セグメント情報をCSV形式で保存"""
-    # 実装時に詳細化
+    """Save segment information in CSV format."""
+    # To be implemented in detail
     pass
 
 
 def _save_segments_yaml(output_file, segments, filename, config):
-    """セグメント情報をYAML形式で保存"""
-    # 実装時に詳細化
+    """Save segment information in YAML format."""
+    # To be implemented in detail
     pass
 
 
 def _create_segment_plot(audio, sr, segments, output_file):
-    """セグメント可視化プロットを作成"""
-    # 実装時に詳細化（matplotlib使用）
+    """Create a segment visualization plot."""
+    # To be implemented in detail (using matplotlib)
     pass
 
 

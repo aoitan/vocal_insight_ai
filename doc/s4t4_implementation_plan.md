@@ -156,11 +156,11 @@ Commands:
 ## 成果物一覧
 
 1. **`doc/cli_interface_design.md`** (5,717文字) - メイン設計文書
-2. **`doc/cli_implementation_sample.py`** (18,100文字) - 実装サンプル  
+2. **`doc/cli_implementation_sample.py`** (20,097文字) - 実装サンプル  
 3. **`doc/cli_usecases_migration.md`** (5,646文字) - ユースケース分析
 4. **本プラン文書** - 実装ガイド・チェックリスト
 
-**総計: 約30,000文字の包括的設計ドキュメント**
+**総計: 約34,000文字の包括的設計ドキュメント**
 
 ## 結論
 
