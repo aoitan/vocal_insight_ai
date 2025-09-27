@@ -4,8 +4,10 @@
 検出された境界からセグメントを生成・調整
 """
 
-import numpy as np
 from typing import List, Tuple
+
+import numpy as np
+
 from ..core.types import AnalysisConfig
 
 

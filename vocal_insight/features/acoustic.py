@@ -6,6 +6,7 @@
 
 import numpy as np
 import parselmouth
+
 from ..core.types import FeatureData
 
 
@@ -99,9 +100,10 @@ class AcousticFeatureExtractor:
             
             for i in range(formants.get_number_of_frames()):
                 try:
-                    f1 = formants.get_value_at_time(1, formants.get_time_from_frame_number(i + 1))
-                    f2 = formants.get_value_at_time(2, formants.get_time_from_frame_number(i + 1))
-                    f3 = formants.get_value_at_time(3, formants.get_time_from_frame_number(i + 1))
+                    frame_time = formants.get_time_from_frame_number(i + 1)
+                    f1 = formants.get_value_at_time(1, frame_time)
+                    f2 = formants.get_value_at_time(2, frame_time)
+                    f3 = formants.get_value_at_time(3, frame_time)
                     
                     # 有効な値のみ追加
                     if not np.isnan(f1) and f1 > 0:

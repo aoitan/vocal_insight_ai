@@ -4,8 +4,8 @@
 音声データからRMS変化点を検出してセグメント境界を特定
 """
 
-import numpy as np
 import librosa
+import numpy as np
 
 
 class SegmentBoundaryDetector:

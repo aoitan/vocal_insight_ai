@@ -4,8 +4,8 @@
 音響特徴量の抽出機能を提供
 """
 
-from .base import FeatureExtractor
 from .acoustic import AcousticFeatureExtractor
+from .base import FeatureExtractor
 
 __all__ = [
     "FeatureExtractor",

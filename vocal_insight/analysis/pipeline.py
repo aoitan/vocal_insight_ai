@@ -5,12 +5,14 @@
 """
 
 from typing import List, Optional
+
 import librosa
-from ..core.types import SegmentAnalysis, AnalysisConfig
+
 from ..core.config import get_default_config
+from ..core.types import AnalysisConfig, SegmentAnalysis
+from ..features.acoustic import AcousticFeatureExtractor
 from ..segments.detector import SegmentBoundaryDetector
 from ..segments.processor import SegmentProcessor
-from ..features.acoustic import AcousticFeatureExtractor
 
 
 def analyze_audio_segments(

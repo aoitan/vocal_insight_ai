@@ -4,8 +4,8 @@
 共通型定義、設定管理、ユーティリティを提供
 """
 
-from .types import FeatureData, SegmentAnalysis, AnalysisConfig
 from .config import get_default_config, validate_config
+from .types import AnalysisConfig, FeatureData, SegmentAnalysis
 
 __all__ = [
     "FeatureData",

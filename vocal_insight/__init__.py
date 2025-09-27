@@ -5,7 +5,7 @@ vocal_insight パッケージ
 """
 
 from .analysis.pipeline import analyze_audio_segments
-from .core.types import FeatureData, SegmentAnalysis, AnalysisConfig
+from .core.types import AnalysisConfig, FeatureData, SegmentAnalysis
 
 __version__ = "0.1.0"
 __all__ = [

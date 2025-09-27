@@ -4,8 +4,10 @@
 拡張可能な特徴量抽出システムのためのインターフェイス定義
 """
 
+from typing import Protocol
+
 import numpy as np
-from typing import Protocol, Dict, Any
+
 from ..core.types import FeatureData
 
 
