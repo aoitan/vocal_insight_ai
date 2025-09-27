@@ -22,6 +22,7 @@ click = "^8.1.7"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 ruff = "^0.13.2"
+pre-commit = "^4.3.0"
 
 [tool.poetry.scripts]
 vocal-insight = "vocal_insight_cli:cli"
