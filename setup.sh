@@ -1,4 +1,5 @@
 #!/bin/bash
+# Note: If you encounter a "Permission denied" error, set executable permissions with: chmod +x setup.sh
 set -e
 
 echo "プロジェクトのセットアップを開始します..."
@@ -9,7 +10,8 @@ then
     echo "Poetryが見つかりません。Poetryをインストールします..."
     curl -sSL https://install.python-poetry.org | python3 -
     echo "Poetryのインストールが完了しました。環境変数を更新するため、シェルを再起動するか、PoetryをPATHに追加してください。"
-    exit 1
+    echo "再度 `./setup.sh` を実行して、残りのセットアップを完了してください。"
+    exit 0
 fi
 
 echo "Poetryの依存関係をインストールします..."
