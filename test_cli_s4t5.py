@@ -146,6 +146,7 @@ class TestCLICompatibility:
                         "legacy",
                         "--output-dir",
                         temp_dir,
+                        "--verbose", # Add verbose option
                     ],
                 )
 
