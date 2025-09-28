@@ -274,7 +274,7 @@ def extract(
         base_name = input_file.stem
 
         if segment_start is not None or segment_end is not None:
-            suffix = f"_{segment_start or 0:.1f}s-{segment_end or (len(y)/sr):.1f}s"
+            suffix = f"_{segment_start or 0:.1f}s-{segment_end or (len(y) / sr):.1f}s"
             base_name += suffix
 
         if output_format == "json":
