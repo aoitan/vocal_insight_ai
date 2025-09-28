@@ -33,7 +33,7 @@ jobs:
           ${{ runner.os }}-poetry-
     - name: Install dependencies
       if: steps.cache-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-root
+      run: poetry install
     - name: Run tests
       run: poetry run pytest
     - name: Run ruff check

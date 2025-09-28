@@ -146,7 +146,7 @@ class TestCLICompatibility:
                         "legacy",
                         "--output-dir",
                         temp_dir,
-                        "--verbose", # Add verbose option
+                        "--verbose", # 詳細出力オプションを追加
                     ],
                 )
 
