@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Optional, Tuple
 
 import numpy as np
@@ -73,7 +74,7 @@ class DemucsSeparator:
         elif audio.ndim == 2:
             mix = audio
             if audio.shape[0] < target_channels:
-                repeat = target_channels // audio.shape[0] + int(target_channels % audio.shape[0] != 0)
+                repeat = math.ceil(target_channels / audio.shape[0])
                 mix = np.tile(audio, (repeat, 1))[:target_channels]
             elif audio.shape[0] > target_channels:
                 mix = audio[:target_channels]

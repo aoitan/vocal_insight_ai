@@ -12,20 +12,20 @@ def test_append_pitch_summary_includes_section_accuracy() -> None:
         "hit_rate": 0.8,
         "stability": 0.9,
         "per_section": [
-            {
-                "section_id": "section_1",
-                "start_s": 0.0,
-                "end_s": 30.0,
-                "cent_deviation": 11.0,
-                "hit_rate": 0.82,
-            },
-            {
-                "section_id": "section_2",
-                "start_s": 30.0,
-                "end_s": 60.0,
-                "cent_deviation": 14.5,
-                "hit_rate": 0.75,
-            },
+        {
+            "section_id": "section_1",
+            "start_s": 0.0,
+            "end_s": 30.0,
+            "mean_cent_deviation": 11.0,
+            "hit_rate": 0.82,
+        },
+        {
+            "section_id": "section_2",
+            "start_s": 30.0,
+            "end_s": 60.0,
+            "mean_cent_deviation": 14.5,
+            "hit_rate": 0.75,
+        },
         ],
     }
 

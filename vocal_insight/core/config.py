@@ -13,6 +13,15 @@ from .types import (
     ReferenceVocalExtractionConfig,
 )
 
+BOOLEAN_REFERENCE_FLAGS = (
+    "enabled",
+    "save_audio",
+    "reuse_existing",
+    "overwrite",
+    "trim_silence",
+    "quality_metrics",
+)
+
 
 def get_default_config() -> AnalysisConfig:
     """デフォルト分析設定を取得
@@ -151,7 +160,7 @@ def _validate_reference_vocal_config(config: ReferenceVocalExtractionConfig) -> 
     if target_sr is not None and target_sr <= 0:
         raise ValueError("reference_vocal.target_sr must be positive")
 
-    for flag in ("enabled", "save_audio", "reuse_existing", "overwrite", "trim_silence", "quality_metrics"):
+    for flag in BOOLEAN_REFERENCE_FLAGS:
         if flag in config and not isinstance(config[flag], bool):
             raise ValueError(f"reference_vocal.{flag} must be a boolean")
 

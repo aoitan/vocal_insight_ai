@@ -59,6 +59,8 @@ def align_pitch_series(
         "metric": "euclidean",
         "subseq": subseq,
     }
+    if window is not None:
+        dtw_kwargs["band_rad"] = int(window)
 
     cost, paths = librosa.sequence.dtw(  # type: ignore[call-arg]
         target_seq,

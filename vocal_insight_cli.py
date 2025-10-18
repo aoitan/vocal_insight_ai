@@ -1122,9 +1122,7 @@ def _append_pitch_summary(prompt: str, pitch_accuracy: Dict[str, Any]) -> str:
             start = section.get("start_s")
             end = section.get("end_s")
             rate = section.get("hit_rate")
-            deviation = section.get("cent_deviation") or section.get(
-                "mean_cent_deviation"
-            )
+            deviation = section.get("mean_cent_deviation")
             span = None
             if start is not None and end is not None:
                 span = f"{start:.1f}-{end:.1f}s"

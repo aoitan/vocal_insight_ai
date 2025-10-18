@@ -57,7 +57,7 @@
     "per_section": [
       {
         "section_id": "verse_1",
-        "cent_deviation": 18.2,
+        "mean_cent_deviation": 18.2,
         "hit_rate": 0.82
       }
     ]

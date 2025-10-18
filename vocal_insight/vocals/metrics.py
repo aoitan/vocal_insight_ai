@@ -51,7 +51,7 @@ def compute_pitch_track_coverage(
 
     hop_length = 256
     try:
-        pitches, _, _ = librosa.pyin(
+        pitches, _voiced_flags, _voiced_prob = librosa.pyin(
             vocal,
             fmin=fmin,
             fmax=fmax,

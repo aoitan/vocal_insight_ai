@@ -9,6 +9,7 @@ import numpy as np
 
 A4_HZ = 440.0
 LOG2 = math.log(2.0)
+STABILITY_NORMALIZATION_CENTS = 200.0  # TODO: Stability指標改善(issue参照)時に検討
 
 
 def hz_to_cents(pitch_hz: np.ndarray) -> np.ndarray:
@@ -80,6 +81,5 @@ def compute_stability(deviations: np.ndarray) -> float:
         return 0.0
 
     std_cents = float(np.std(deviations))
-    # 0 centなら安定度1. 200セントで0に近づくよう減衰（経験的選択）
-    stability = max(0.0, 1.0 - (std_cents / 200.0))
+    stability = max(0.0, 1.0 - (std_cents / STABILITY_NORMALIZATION_CENTS))
     return float(min(stability, 1.0))

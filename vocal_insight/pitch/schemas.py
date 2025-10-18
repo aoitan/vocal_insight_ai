@@ -45,7 +45,7 @@ class PitchSectionMetrics:
             "section_id": self.section_id,
             "start_s": float(self.start_s),
             "end_s": float(self.end_s),
-            "cent_deviation": float(self.mean_cent_deviation),
+            "mean_cent_deviation": float(self.mean_cent_deviation),
             "hit_rate": float(self.hit_rate),
             "sample_count": int(self.sample_count),
         }
