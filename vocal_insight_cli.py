@@ -18,8 +18,8 @@ from vocal_insight import (
 )
 from vocal_insight.core.config import get_default_config, merge_config, validate_config
 from vocal_insight.vocals import ReferenceVocalExtractor
-from vocal_insight.vocals.separators import available_separators
 from vocal_insight.vocals.loader import resolve_path
+from vocal_insight.vocals.separators import available_separators
 
 # レガシー互換性のためのインポート
 from vocal_insight_ai import analyze_audio_segments as legacy_analyze
