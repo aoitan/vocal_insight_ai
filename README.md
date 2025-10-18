@@ -10,6 +10,7 @@
 - **CLIクライアント (`vocal_insight_cli`)**: コアライブラリを利用し、コマンドラインから音声分析を実行します。現在、基本的な分析機能が実装されています。
 - **Web API (`vocal_insight_api`)**: コアライブラリとLLMゲートウェイを介して、Webベースの分析機能を提供します。
 - **Web UI (`vocal_insight_ui`)**: Gradioベースの簡易的なWebインターフェースで、ユーザーが音声ファイルをアップロードし、対話的に分析を進めることができます。
+- **リファレンスボーカル抽出 (`vocal_insight/vocals`)**: リファレンス音源からボーカルのみを抽出し、音程判定や対照分析で再利用できるようにします。
 
 ## 🚀 プロジェクトの進め方
 
@@ -42,6 +43,14 @@
     poetry install
     ```
 
+    Demucs ベースのボーカル抽出を利用する場合は、追加のオプション依存をインストールします。
+
+    ```bash
+    poetry install --extras demucs
+    ```
+
+    すでに環境が構築済みでエクストラだけ追加する場合は `poetry install --only-root --extras demucs` などを利用してください。
+
 ### CLIの使い方
 
 ```bash
@@ -54,6 +63,49 @@ poetry run vocal-insight analyze audio/sample.wav --output-dir output
 ```
 
 実行後、指定された出力ディレクトリに `<入力ファイル名>_prompt.txt` という名前で分析結果のプロンプトが出力されます。
+
+### リファレンスボーカル付きの分析実行
+
+抽出済みのリファレンスボーカルを音程判定などに利用する場合、`analyze` コマンドに `--reference-audio` オプションを追加します。抽出結果は指定したディレクトリに保存され、分析レポートのJSON/YAML出力には品質指標（SNR、ピッチトラッカビリティなど）が含まれます。
+
+```bash
+poetry run vocal-insight analyze user.wav \
+  --output-dir output \
+  --format json \
+  --reference-audio reference.wav \
+  --reference-output-dir output/reference \
+  --reference-cache-dir output/reference/cache
+```
+
+主なオプション:
+
+- `--reference-audio`: リファレンス音源のパスを指定。
+- `--reference-output-dir`: 抽出したボーカルの保存先ディレクトリ。
+- `--reference-cache-dir`: NumPy形式でのキャッシュ保存先。
+- `--reference-model-type`: 使用する抽出モデル種別（`hpss` または `demucs`）。
+- `--reference-no-save`: 抽出結果のWAV保存をスキップし、キャッシュとメタデータのみを残します。
+
+Demucs ベースの抽出を利用する場合は `--reference-model-type demucs` を指定し、`poetry install --extras demucs` でオプション依存を追加します（pip で個別に導入しても問題ありません）。`vocal_insight/core/config.py` 内の `reference_vocal.demucs_*` 設定を通してモデル名や処理パラメータを細かく調整可能です。
+
+### 音程判定を含む分析実行
+
+リファレンスボーカルが利用可能な場合、`--pitch-analysis-enabled` を指定すると音程一致度の計算結果が JSON/YAML に含まれ、任意の JSON ファイルにも保存できます。
+
+```bash
+poetry run vocal-insight analyze user.wav \
+  --output-dir output \
+  --format json \
+  --reference-audio reference.wav \
+  --pitch-analysis-enabled \
+  --pitch-results-path output/pitch/user_pitch.json
+```
+
+主なオプション:
+
+- `--pitch-analysis-enabled`: 音程判定を有効化します。
+- `--pitch-results-path`: ピッチ分析結果を JSON として保存するパス。
+- `--pitch-cent-tolerance`: ヒット率計算時の許容誤差（セント）を指定。
+- `--pitch-disable-prompt`: 生成されるプロンプト内への音程要約の挿入を無効化。
 
 ## 🤝 貢献
 

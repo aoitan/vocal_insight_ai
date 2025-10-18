@@ -18,6 +18,9 @@ numpy = "^1.26.4"
 soundfile = "^0.12.1"
 praat-parselmouth = "*"
 click = "^8.1.7"
+demucs = {version = "^4.0.0", optional = true}
+torch = {version = "^2.3.0", optional = true}
+torchaudio = {version = "^2.3.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
@@ -26,6 +29,9 @@ pre-commit = "^4.3.0"
 
 [tool.poetry.scripts]
 vocal-insight = "vocal_insight_cli:cli"
+
+[tool.poetry.extras]
+demucs = ["demucs", "torch", "torchaudio"]
 
 [build-system]
 requires = ["poetry-core"]

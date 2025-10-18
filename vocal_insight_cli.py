@@ -10,8 +10,16 @@ import yaml
 from vocal_insight import (
     AnalysisConfig,
     FeatureData,
+    PitchAnalysisResult,
+    ReferenceVocalExtractionConfig,
+    ReferenceVocalExtractionResult,
     analyze_audio_segments,
+    analyze_pitch_accuracy,
 )
+from vocal_insight.core.config import get_default_config, merge_config, validate_config
+from vocal_insight.vocals import ReferenceVocalExtractor
+from vocal_insight.vocals.loader import resolve_path
+from vocal_insight.vocals.separators import available_separators
 
 # レガシー互換性のためのインポート
 from vocal_insight_ai import analyze_audio_segments as legacy_analyze
@@ -84,6 +92,80 @@ def cli(ctx: click.Context, verbose: bool, quiet: bool):
     default="txt",
     help="Output format [default: txt]",
 )
+@click.option(
+    "--verbose",
+    "-v",
+    "sub_verbose",
+    is_flag=True,
+    help="Enable verbose output",
+)
+@click.option(
+    "--quiet",
+    "-q",
+    "sub_quiet",
+    is_flag=True,
+    help="Suppress all output except errors",
+)
+@click.option(
+    "--reference-audio",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Path to the reference audio file for vocal extraction",
+)
+@click.option(
+    "--reference-output-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Directory to store extracted reference vocals",
+)
+@click.option(
+    "--reference-cache-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Directory to cache extracted vocals as numpy arrays",
+)
+@click.option(
+    "--reference-model-type",
+    type=click.Choice(sorted(available_separators()), case_sensitive=False),
+    help="Model type to use for reference vocal extraction",
+)
+@click.option(
+    "--reference-model-path",
+    type=click.Path(dir_okay=False, path_type=Path, exists=False),
+    help="Path to pre-downloaded model weights for vocal extraction",
+)
+@click.option(
+    "--reference-no-save",
+    is_flag=True,
+    help="Skip writing extracted reference vocal audio to disk",
+)
+@click.option(
+    "--reference-overwrite",
+    is_flag=True,
+    help="Overwrite existing extracted reference vocals",
+)
+@click.option(
+    "--reference-disable",
+    is_flag=True,
+    help="Disable reference vocal extraction even if reference audio is provided",
+)
+@click.option(
+    "--pitch-analysis-enabled",
+    is_flag=True,
+    help="Enable pitch accuracy analysis using reference vocals",
+)
+@click.option(
+    "--pitch-results-path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Path to save pitch analysis results as JSON",
+)
+@click.option(
+    "--pitch-cent-tolerance",
+    type=float,
+    help="Pitch hit-rate tolerance in cents (default: 50.0)",
+)
+@click.option(
+    "--pitch-disable-prompt",
+    is_flag=True,
+    help="Do not include pitch analysis summary in generated prompt",
+)
 @click.pass_context
 def analyze(
     ctx: click.Context,
@@ -94,6 +176,20 @@ def analyze(
     max_segment: float,
     percentile: int,
     output_format: str,
+    sub_verbose: bool,
+    sub_quiet: bool,
+    reference_audio: Optional[Path],
+    reference_output_dir: Optional[Path],
+    reference_cache_dir: Optional[Path],
+    reference_model_type: Optional[str],
+    reference_model_path: Optional[Path],
+    reference_no_save: bool,
+    reference_overwrite: bool,
+    reference_disable: bool,
+    pitch_analysis_enabled: bool,
+    pitch_results_path: Optional[Path],
+    pitch_cent_tolerance: Optional[float],
+    pitch_disable_prompt: bool,
 ):
     """Analyze an audio file and generate comprehensive analysis results.
 
@@ -116,8 +212,21 @@ def analyze(
         # Use specific processing module
         vocal-insight analyze recording.wav --module acoustic --format yaml
     """
-    verbose = ctx.obj.get("verbose", False)
-    quiet = ctx.obj.get("quiet", False)
+    group_verbose = ctx.obj.get("verbose", False)
+    group_quiet = ctx.obj.get("quiet", False)
+
+    verbose = bool(group_verbose or sub_verbose)
+    quiet = bool(group_quiet or sub_quiet)
+
+    if verbose and quiet:
+        click.echo(
+            "Error: --verbose and --quiet cannot be used together.",
+            err=True,
+        )
+        ctx.exit(1)
+
+    ctx.obj["verbose"] = verbose
+    ctx.obj["quiet"] = quiet
 
     if not quiet:
         click.echo(f"🎵 Analyzing {input_file.name}...")
@@ -128,13 +237,110 @@ def analyze(
         ctx.exit(1)
 
     # Create configuration
-    config = AnalysisConfig(
-        rms_delta_percentile=percentile,
-        min_len_sec=min_segment,
-        max_len_sec=max_segment,
-    )
+    base_config = get_default_config()
+    overrides: Dict[str, Any] = {
+        "rms_delta_percentile": percentile,
+        "min_len_sec": min_segment,
+        "max_len_sec": max_segment,
+    }
+
+    reference_updates: Dict[str, Any] = {}
+    pitch_updates: Dict[str, Any] = {}
+
+    if reference_audio is not None:
+        reference_updates["enabled"] = not reference_disable
+        reference_updates["source_path"] = str(reference_audio)
+    elif reference_disable:
+        reference_updates["enabled"] = False
+
+    if reference_output_dir is not None:
+        reference_updates["output_dir"] = str(reference_output_dir)
+    if reference_cache_dir is not None:
+        reference_updates["cache_dir"] = str(reference_cache_dir)
+    if reference_model_type is not None:
+        reference_updates["model_type"] = reference_model_type.lower()
+    if reference_model_path is not None:
+        reference_updates["model_path"] = str(reference_model_path)
+    if reference_no_save:
+        reference_updates["save_audio"] = False
+    if reference_overwrite:
+        reference_updates["overwrite"] = True
+        reference_updates["reuse_existing"] = False
+
+    if reference_updates:
+        overrides["reference_vocal"] = reference_updates
+
+    if pitch_analysis_enabled:
+        pitch_updates["enabled"] = True
+    if pitch_disable_prompt:
+        pitch_updates["include_in_prompt"] = False
+    if pitch_results_path is not None:
+        pitch_updates["output_path"] = str(pitch_results_path)
+    if pitch_cent_tolerance is not None:
+        pitch_updates["cent_tolerance"] = float(pitch_cent_tolerance)
+
+    if pitch_updates:
+        overrides["pitch_analysis"] = pitch_updates
+
+    config = merge_config(base_config, overrides)
+    validate_config(config)
 
     try:
+        reference_result: Optional[ReferenceVocalExtractionResult] = None
+        reference_payload: Optional[Dict[str, Any]] = None
+        pitch_result: Optional[PitchAnalysisResult] = None
+
+        if reference_audio and config["reference_vocal"].get("enabled", True):
+            if verbose:
+                click.echo("🎯 Extracting reference vocals...")
+
+            expected_output_dir = (
+                reference_output_dir
+                or config["reference_vocal"].get("output_dir")
+            )
+            extractor = ReferenceVocalExtractor(config["reference_vocal"])
+            reference_result = extractor.extract_from_path(
+                reference_audio,
+                output_dir=expected_output_dir,
+            )
+
+            config["reference_vocal"]["extracted_path"] = (
+                str(reference_result.output_path)
+                if reference_result.output_path
+                else config["reference_vocal"].get("extracted_path")
+            )
+            config["reference_vocal"]["metadata_path"] = (
+                str(reference_result.metadata_path)
+                if reference_result.metadata_path
+                else config["reference_vocal"].get("metadata_path")
+            )
+            if reference_result.cache_path:
+                config["reference_vocal"]["cache_path"] = str(reference_result.cache_path)
+
+            reference_payload = _build_reference_payload(
+                reference_result, config["reference_vocal"]
+            )
+        else:
+            reference_payload = _build_reference_payload(
+                None, config["reference_vocal"]
+            )
+
+        if config["pitch_analysis"].get("enabled"):
+            if verbose:
+                click.echo("🎯 Running pitch accuracy analysis...")
+
+            pitch_result = _run_pitch_analysis(
+                input_file,
+                config,
+                reference_result,
+                reference_payload,
+            )
+
+            if pitch_result and config["pitch_analysis"].get("output_path"):
+                _persist_pitch_result(
+                    Path(config["pitch_analysis"]["output_path"]), pitch_result
+                )
+
         # Module dispatch
         if module == "legacy":
             if verbose:
@@ -161,6 +367,17 @@ def analyze(
             # Generate LLM prompt from segments
             llm_prompt = _generate_llm_prompt_from_segments(segments, input_file.name)
 
+        if reference_payload:
+            llm_prompt = _append_reference_summary(llm_prompt, reference_payload)
+        if (
+            pitch_result
+            and pitch_result.pitch_accuracy is not None
+            and config["pitch_analysis"].get("include_in_prompt", True)
+        ):
+            llm_prompt = _append_pitch_summary(
+                llm_prompt, pitch_result.pitch_accuracy.as_dict()
+            )
+
         # Create output directory
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -173,10 +390,24 @@ def analyze(
             _save_text_format(output_file, segments, llm_prompt)
         elif output_format == "json":
             output_file = output_dir / f"{base_name}_analysis.json"
-            _save_json_format(output_file, segments, input_file.name, config)
+            _save_json_format(
+                output_file,
+                segments,
+                input_file.name,
+                config,
+                reference_payload,
+                pitch_result.as_dict() if pitch_result else None,
+            )
         elif output_format == "yaml":
             output_file = output_dir / f"{base_name}_analysis.yaml"
-            _save_yaml_format(output_file, segments, input_file.name, config)
+            _save_yaml_format(
+                output_file,
+                segments,
+                input_file.name,
+                config,
+                reference_payload,
+                pitch_result.as_dict() if pitch_result else None,
+            )
 
         if not quiet:
             click.echo(f"✅ Analysis saved to {output_file}")
@@ -186,6 +417,18 @@ def analyze(
             if segments:
                 total_duration = segments[-1].get("time_end_s", 0)
                 click.echo(f"⏱️  Total duration: {total_duration:.1f} seconds")
+            if reference_result and reference_result.metrics:
+                metrics = reference_result.metrics
+                click.echo(
+                    "🎯 Reference SNR: "
+                    f"{metrics.snr_db:.1f} dB, pitch coverage: {metrics.pitch_track_coverage:.2f}"
+                )
+            if pitch_result and pitch_result.pitch_accuracy:
+                accuracy = pitch_result.pitch_accuracy
+                click.echo(
+                    "🎵 Pitch mean deviation: "
+                    f"{accuracy.mean_cent_deviation:.1f} cent, hit rate: {accuracy.hit_rate:.2f}"
+                )
 
     except Exception as e:
         click.echo(f"❌ Error during analysis: {e}", err=True)
@@ -661,6 +904,8 @@ def _save_json_format(
     segments: List[Dict[str, Any]],
     filename: str,
     config: AnalysisConfig,
+    reference_info: Optional[Dict[str, Any]] = None,
+    pitch_info: Optional[Dict[str, Any]] = None,
 ):
     """Save analysis results in JSON format."""
     data = {
@@ -677,6 +922,11 @@ def _save_json_format(
         },
     }
 
+    if reference_info is not None:
+        data["reference_vocal"] = reference_info
+    if pitch_info is not None:
+        data["pitch_analysis"] = pitch_info
+
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -686,6 +936,8 @@ def _save_yaml_format(
     segments: List[Dict[str, Any]],
     filename: str,
     config: AnalysisConfig,
+    reference_info: Optional[Dict[str, Any]] = None,
+    pitch_info: Optional[Dict[str, Any]] = None,
 ):
     """Save analysis results in YAML format."""
     data = {
@@ -701,6 +953,11 @@ def _save_yaml_format(
             "total_duration_s": segments[-1].get("time_end_s", 0) if segments else 0,
         },
     }
+
+    if reference_info is not None:
+        data["reference_vocal"] = reference_info
+    if pitch_info is not None:
+        data["pitch_analysis"] = pitch_info
 
     with open(output_file, "w", encoding="utf-8") as f:
         yaml.dump(
@@ -773,6 +1030,194 @@ def _save_features_yaml(
         yaml.dump(
             data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
         )
+
+
+def _run_pitch_analysis(
+    input_file: Path,
+    config: AnalysisConfig,
+    reference_result: Optional[ReferenceVocalExtractionResult],
+    reference_payload: Optional[Dict[str, Any]],
+) -> Optional[PitchAnalysisResult]:
+    pitch_cfg = config.get("pitch_analysis", {})
+
+    reference_audio = None
+    reference_sr = None
+    reference_path = None
+
+    if reference_result and reference_result.audio.size > 0:
+        reference_audio = reference_result.audio
+        reference_sr = reference_result.sample_rate
+        if reference_result.output_path:
+            reference_path = str(reference_result.output_path)
+        elif reference_result.source_path:
+            reference_path = str(reference_result.source_path)
+
+    if reference_audio is None:
+        candidate_paths = []
+        if reference_payload:
+            candidate_paths.extend(
+                [
+                    reference_payload.get("output_path"),
+                    reference_payload.get("reference_path"),
+                ]
+            )
+        candidate_paths.extend(
+            [
+                pitch_cfg.get("reference_file"),
+                config.get("reference_vocal", {}).get("extracted_path"),
+                config.get("reference_vocal", {}).get("source_path"),
+            ]
+        )
+
+        for candidate in candidate_paths:
+            if not candidate:
+                continue
+            resolved = resolve_path(candidate)
+            if resolved and resolved.exists():
+                reference_path = str(resolved)
+                reference_audio, reference_sr = librosa.load(
+                    resolved, sr=pitch_cfg.get("target_sr")
+                )
+                break
+
+    target_audio, target_sr = librosa.load(
+        str(input_file), sr=pitch_cfg.get("target_sr")
+    )
+
+    metadata = {"reference_path": reference_path} if reference_path else None
+
+    return analyze_pitch_accuracy(
+        target_audio,
+        target_sr,
+        reference_audio,
+        reference_sr,
+        pitch_cfg,
+        reference_metadata=metadata,
+    )
+
+
+def _persist_pitch_result(path: Path, result: PitchAnalysisResult) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fp:
+        json.dump(result.as_dict(), fp, indent=2, ensure_ascii=False)
+
+
+def _append_pitch_summary(prompt: str, pitch_accuracy: Dict[str, Any]) -> str:
+    lines = [prompt.rstrip(), "", "--- Pitch Accuracy ---"]
+    mean_dev = pitch_accuracy.get("mean_cent_deviation")
+    hit_rate = pitch_accuracy.get("hit_rate")
+    stability = pitch_accuracy.get("stability")
+    if mean_dev is not None:
+        lines.append(f"Mean deviation: {mean_dev:.1f} cent")
+    if hit_rate is not None:
+        lines.append(f"Hit rate: {hit_rate:.2f}")
+    if stability is not None:
+        lines.append(f"Stability: {stability:.2f}")
+
+    sections = pitch_accuracy.get("per_section")
+    if sections:
+        lines.append("Section details:")
+        for section in sections:
+            section_id = section.get("section_id", "section")
+            start = section.get("start_s")
+            end = section.get("end_s")
+            rate = section.get("hit_rate")
+            deviation = section.get("mean_cent_deviation")
+            span = None
+            if start is not None and end is not None:
+                span = f"{start:.1f}-{end:.1f}s"
+            elif start is not None:
+                span = f"start {start:.1f}s"
+            elif end is not None:
+                span = f"end {end:.1f}s"
+
+            detail_parts = [f"section {section_id}"]
+            if span:
+                detail_parts.append(f"({span})")
+            if rate is not None:
+                detail_parts.append(f"hit {rate:.2f}")
+            if deviation is not None:
+                detail_parts.append(f"deviation {deviation:.1f} cent")
+            sample_count = section.get("sample_count")
+            if sample_count is not None:
+                detail_parts.append(f"n={sample_count}")
+            lines.append(" ".join(detail_parts))
+    return "\n".join(lines)
+
+
+def _build_reference_payload(
+    result: Optional[ReferenceVocalExtractionResult],
+    config: ReferenceVocalExtractionConfig,
+) -> Optional[Dict[str, Any]]:
+    enabled = bool(config.get("enabled", False))
+
+    payload: Dict[str, Any] = {
+        "enabled": enabled,
+        "model_type": config.get("model_type"),
+        "source_path": config.get("source_path"),
+        "output_dir": config.get("output_dir"),
+        "output_path": config.get("extracted_path"),
+        "metadata_path": config.get("metadata_path"),
+        "cache_dir": config.get("cache_dir"),
+        "cache_path": config.get("cache_path"),
+        "model_path": config.get("model_path"),
+    }
+
+    if result is not None:
+        payload["output_path"] = (
+            str(result.output_path) if result.output_path else payload.get("output_path")
+        )
+        payload["metadata_path"] = (
+            str(result.metadata_path)
+            if result.metadata_path
+            else payload.get("metadata_path")
+        )
+        payload["cache_path"] = (
+            str(result.cache_path) if result.cache_path else payload.get("cache_path")
+        )
+        payload["sample_rate"] = result.sample_rate
+        payload["processing_time_sec"] = result.processing_time_sec
+        payload["processed_at"] = (
+            result.processed_at.replace(tzinfo=None).isoformat() + "Z"
+        )
+
+        if result.metrics:
+            payload["metrics"] = result.metrics.as_dict()
+
+    # すべてが未設定かつ無効な場合は None を返す
+    values = [v for k, v in payload.items() if k not in {"enabled", "model_type"}]
+    if not enabled and result is None and all(v in (None, "") for v in values):
+        return None
+
+    return payload
+
+
+def _append_reference_summary(
+    prompt: str, reference_info: Dict[str, Any]
+) -> str:
+    if not reference_info.get("enabled") and not reference_info.get("output_path"):
+        return prompt
+
+    lines = [prompt.rstrip(), "", "--- Reference Vocal Extraction ---"]
+    if reference_info.get("enabled"):
+        lines.append("Enabled: yes")
+    else:
+        lines.append("Enabled: no")
+
+    if reference_info.get("output_path"):
+        lines.append(f"Output: {reference_info['output_path']}")
+    if reference_info.get("metadata_path"):
+        lines.append(f"Metadata: {reference_info['metadata_path']}")
+    if reference_info.get("metrics"):
+        metrics = reference_info["metrics"]
+        snr = metrics.get("snr_db")
+        coverage = metrics.get("pitch_track_coverage")
+        if snr is not None:
+            lines.append(f"SNR: {snr:.1f} dB")
+        if coverage is not None:
+            lines.append(f"Pitch coverage: {coverage:.2f}")
+
+    return "\n".join(lines)
 
 
 def _save_segments_json(

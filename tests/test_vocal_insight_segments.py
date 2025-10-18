@@ -9,7 +9,7 @@ TDD Red Phase: 実装前のテスト記述
 
 import numpy as np
 
-from vocal_insight.core.types import AnalysisConfig
+from vocal_insight.core.config import get_default_config
 from vocal_insight.segments.detector import SegmentBoundaryDetector
 from vocal_insight.segments.processor import SegmentProcessor
 
@@ -91,9 +91,7 @@ class TestSegmentProcessor:
         processor = SegmentProcessor()
         boundaries = np.array([])
         total_duration = 60.0
-        config = AnalysisConfig(
-            rms_delta_percentile=95, min_len_sec=8.0, max_len_sec=45.0
-        )
+        config = get_default_config()
 
         # When: 境界処理を実行
         segments = processor.process(boundaries, total_duration, config)
@@ -111,9 +109,7 @@ class TestSegmentProcessor:
         processor = SegmentProcessor()
         boundaries = np.array([30.0])
         total_duration = 60.0
-        config = AnalysisConfig(
-            rms_delta_percentile=95, min_len_sec=8.0, max_len_sec=45.0
-        )
+        config = get_default_config()
 
         # When: 境界処理を実行
         segments = processor.process(boundaries, total_duration, config)
@@ -129,9 +125,7 @@ class TestSegmentProcessor:
         processor = SegmentProcessor()
         boundaries = np.array([5.0, 15.0])  # 最初のセグメントが5秒（min_len未満）
         total_duration = 30.0
-        config = AnalysisConfig(
-            rms_delta_percentile=95, min_len_sec=8.0, max_len_sec=45.0
-        )
+        config = get_default_config()
 
         # When: 境界処理を実行
         segments = processor.process(boundaries, total_duration, config)
@@ -146,9 +140,7 @@ class TestSegmentProcessor:
         processor = SegmentProcessor()
         boundaries = np.array([])  # 境界なし -> 全体が1セグメント
         total_duration = 120.0  # 2分（max_lenより長い）
-        config = AnalysisConfig(
-            rms_delta_percentile=95, min_len_sec=8.0, max_len_sec=45.0
-        )
+        config = get_default_config()
 
         # When: 境界処理を実行
         segments = processor.process(boundaries, total_duration, config)
@@ -163,9 +155,7 @@ class TestSegmentProcessor:
         processor = SegmentProcessor()
         boundaries = np.array([20.0, 40.0, 80.0])
         total_duration = 100.0
-        config = AnalysisConfig(
-            rms_delta_percentile=95, min_len_sec=8.0, max_len_sec=45.0
-        )
+        config = get_default_config()
 
         # When: 境界処理を実行
         segments = processor.process(boundaries, total_duration, config)
@@ -186,9 +176,7 @@ class TestSegmentProcessor:
         processor = SegmentProcessor()
         boundaries = np.array([15.0, 35.0, 55.0])
         total_duration = 70.0
-        config = AnalysisConfig(
-            rms_delta_percentile=95, min_len_sec=8.0, max_len_sec=45.0
-        )
+        config = get_default_config()
 
         # When: 境界処理を実行
         segments = processor.process(boundaries, total_duration, config)
