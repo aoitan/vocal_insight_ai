@@ -60,14 +60,16 @@ class TestCoreTypes:
     def test_analysis_config_structure(self):
         """AnalysisConfig型が正しい構造を持つことを確認"""
         # Given: 分析設定データ
-        config = AnalysisConfig(
-            rms_delta_percentile=95, min_len_sec=8.0, max_len_sec=45.0
-        )
+        config = get_default_config()
 
         # When & Then: 全てのフィールドにアクセス可能
         assert config["rms_delta_percentile"] == 95
         assert config["min_len_sec"] == 8.0
         assert config["max_len_sec"] == 45.0
+        assert "reference_vocal" in config
+        assert config["reference_vocal"]["enabled"] is False
+        assert "pitch_analysis" in config
+        assert config["pitch_analysis"]["enabled"] is False
 
 
 class TestCoreConfig:
@@ -86,9 +88,11 @@ class TestCoreConfig:
     def test_validate_config_with_valid_config(self):
         """有効な設定の検証が成功することを確認"""
         # Given: 有効な設定
-        valid_config = AnalysisConfig(
-            rms_delta_percentile=95, min_len_sec=8.0, max_len_sec=45.0
-        )
+        valid_config = get_default_config()
+        valid_config["rms_delta_percentile"] = 90
+        valid_config["min_len_sec"] = 5.0
+        valid_config["max_len_sec"] = 40.0
+        valid_config["pitch_analysis"]["cent_tolerance"] = 40.0
 
         # When & Then: 検証が成功する
         assert validate_config(valid_config) is True
@@ -96,11 +100,8 @@ class TestCoreConfig:
     def test_validate_config_with_invalid_percentile(self):
         """無効なパーセンタイルで検証が失敗することを確認"""
         # Given: 無効なパーセンタイル値
-        invalid_config = AnalysisConfig(
-            rms_delta_percentile=101,  # 100を超える値は無効
-            min_len_sec=8.0,
-            max_len_sec=45.0,
-        )
+        invalid_config = get_default_config()
+        invalid_config["rms_delta_percentile"] = 101  # 100を超える値は無効
 
         # When & Then: 検証が失敗する
         with pytest.raises(
@@ -111,14 +112,20 @@ class TestCoreConfig:
     def test_validate_config_with_invalid_segment_length(self):
         """無効なセグメント長で検証が失敗することを確認"""
         # Given: 最小長が最大長より大きい無効な設定
-        invalid_config = AnalysisConfig(
-            rms_delta_percentile=95,
-            min_len_sec=50.0,  # max_len_secより大きい
-            max_len_sec=45.0,
-        )
+        invalid_config = get_default_config()
+        invalid_config["min_len_sec"] = 50.0  # max_len_secより大きい
 
         # When & Then: 検証が失敗する
         with pytest.raises(
             ValueError, match="min_len_sec must be less than max_len_sec"
+        ):
+            validate_config(invalid_config)
+
+    def test_validate_config_with_invalid_pitch_tolerance(self):
+        invalid_config = get_default_config()
+        invalid_config["pitch_analysis"]["cent_tolerance"] = -10
+
+        with pytest.raises(
+            ValueError, match="pitch_analysis.cent_tolerance must be positive"
         ):
             validate_config(invalid_config)

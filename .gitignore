@@ -42,3 +42,6 @@ coverage.xml
 
 # macosx
 .DS_Store
+
+# Local run artifacts
+test_output/
