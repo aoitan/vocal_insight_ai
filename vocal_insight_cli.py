@@ -93,6 +93,20 @@ def cli(ctx: click.Context, verbose: bool, quiet: bool):
     help="Output format [default: txt]",
 )
 @click.option(
+    "--verbose",
+    "-v",
+    "sub_verbose",
+    is_flag=True,
+    help="Enable verbose output",
+)
+@click.option(
+    "--quiet",
+    "-q",
+    "sub_quiet",
+    is_flag=True,
+    help="Suppress all output except errors",
+)
+@click.option(
     "--reference-audio",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help="Path to the reference audio file for vocal extraction",
@@ -162,6 +176,8 @@ def analyze(
     max_segment: float,
     percentile: int,
     output_format: str,
+    sub_verbose: bool,
+    sub_quiet: bool,
     reference_audio: Optional[Path],
     reference_output_dir: Optional[Path],
     reference_cache_dir: Optional[Path],
@@ -196,8 +212,21 @@ def analyze(
         # Use specific processing module
         vocal-insight analyze recording.wav --module acoustic --format yaml
     """
-    verbose = ctx.obj.get("verbose", False)
-    quiet = ctx.obj.get("quiet", False)
+    group_verbose = ctx.obj.get("verbose", False)
+    group_quiet = ctx.obj.get("quiet", False)
+
+    verbose = bool(group_verbose or sub_verbose)
+    quiet = bool(group_quiet or sub_quiet)
+
+    if verbose and quiet:
+        click.echo(
+            "Error: --verbose and --quiet cannot be used together.",
+            err=True,
+        )
+        ctx.exit(1)
+
+    ctx.obj["verbose"] = verbose
+    ctx.obj["quiet"] = quiet
 
     if not quiet:
         click.echo(f"🎵 Analyzing {input_file.name}...")
