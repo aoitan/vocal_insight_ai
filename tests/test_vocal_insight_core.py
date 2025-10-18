@@ -10,7 +10,7 @@ TDD Red Phase: 実装前のテスト記述
 import pytest
 
 from vocal_insight.core.config import get_default_config, validate_config
-from vocal_insight.core.types import AnalysisConfig, FeatureData, SegmentAnalysis
+from vocal_insight.core.types import FeatureData, SegmentAnalysis
 
 
 class TestCoreTypes:

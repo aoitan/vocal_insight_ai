@@ -51,9 +51,8 @@ def available_separators() -> list[str]:
     return sorted(_SEPARATOR_REGISTRY)
 
 
-from .hpss import HPSSSeparator  # noqa: E402  pylint: disable=wrong-import-position
 from .demucs import DemucsSeparator  # noqa: E402  pylint: disable=wrong-import-position
-
+from .hpss import HPSSSeparator  # noqa: E402  pylint: disable=wrong-import-position
 
 register_separator("hpss", lambda cfg: HPSSSeparator(cfg), replace=True)
 register_separator("demucs", lambda cfg: DemucsSeparator(cfg), replace=True)

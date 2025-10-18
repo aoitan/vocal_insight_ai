@@ -2,9 +2,9 @@
 
 from .analyzer import analyze_pitch_accuracy, analyze_pitch_accuracy_from_files
 from .schemas import (
+    PitchAccuracyMetrics,
     PitchAlignmentInfo,
     PitchAnalysisResult,
-    PitchAccuracyMetrics,
     PitchSectionMetrics,
 )
 

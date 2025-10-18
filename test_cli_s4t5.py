@@ -15,15 +15,16 @@ import pytest
 import soundfile as sf
 from click.testing import CliRunner
 
-# テスト対象のCLIインポート
-from vocal_insight_cli import cli
 from vocal_insight.pitch.schemas import (
     PitchAccuracyMetrics,
-    PitchAnalysisResult,
     PitchAlignmentInfo,
+    PitchAnalysisResult,
     PitchSectionMetrics,
 )
 from vocal_insight.vocals import ReferenceVocalExtractionResult, ReferenceVocalMetrics
+
+# テスト対象のCLIインポート
+from vocal_insight_cli import cli
 
 
 class TestCLIBasicFunctions:

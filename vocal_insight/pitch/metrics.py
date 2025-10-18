@@ -7,7 +7,6 @@ from typing import Tuple
 
 import numpy as np
 
-
 A4_HZ = 440.0
 LOG2 = math.log(2.0)
 

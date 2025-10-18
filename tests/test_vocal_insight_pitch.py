@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from vocal_insight.core.config import get_default_config
 from vocal_insight.pitch import analyze_pitch_accuracy

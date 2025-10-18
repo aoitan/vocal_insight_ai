@@ -14,8 +14,8 @@ from .core.types import (
 )
 from .pitch import (
     PitchAccuracyMetrics,
-    PitchAnalysisResult,
     PitchAlignmentInfo,
+    PitchAnalysisResult,
     analyze_pitch_accuracy,
     analyze_pitch_accuracy_from_files,
 )
